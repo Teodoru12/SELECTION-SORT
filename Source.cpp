@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+//Varianta de verificare 
 
 
 #define ID_BEEP 1

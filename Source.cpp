@@ -14,14 +14,17 @@
 #define ID_vectori 101
 #define ID_LSI 102
 #define ID_LDI 103
-#define ID_GRAFIC1 1001
-#define ID_GRAFIC2 1002
-#define ID_GRAFIC3 1003
+#define ID_GRAFIC1 123
+#define ID_GRAFIC2 124
+#define ID_GRAFIC3 125
+#define ID_INAPOI 126
+#define ID_QUIT2 21
 
 char c[100];
 int v[100];
-
+int timp1,timp2,timp3;
 HWND vectori_result;
+clock_t start1,start2,start3,end1,end2,end3;
 
 typedef struct nodS{
 int numar;
@@ -167,6 +170,7 @@ void sortare_lista_simpla()
 	poz=(nodS*)malloc(sizeof(nodS));
 	j=(nodS*)malloc(sizeof(nodS));
 	x=(nodS*)malloc(sizeof(nodS));
+	start1=clock();
 
 	for(p=head;p!=end;p=p->urmator)
 	{
@@ -185,6 +189,8 @@ void sortare_lista_simpla()
 			p->numar=aux;
 		}
 	}
+	end1=clock();
+	timp1=int(end1-start1);
 }
 
 void sortare_lista_dubla()
@@ -195,6 +201,7 @@ void sortare_lista_dubla()
 	poz=(nodD*)malloc(sizeof(nodD));
 	j=(nodD*)malloc(sizeof(nodD));
 	x=(nodD*)malloc(sizeof(nodD));
+	start2=clock();
 		for(p=prim;p!=ultim;p=p->urmator)
 		{
 		x=p;
@@ -211,6 +218,8 @@ void sortare_lista_dubla()
 			p->numar=aux;
 		}
 		}
+		end2=clock();
+	timp2=int(end2-start2);
 }
 
 
@@ -222,7 +231,7 @@ void sort_selectie(HWND hwnd, int n, int a[100])
 
 	char **s;
 	s = (char**)malloc(sizeof(char*)*n);
-
+	start3=clock();
 	for (i = 0; i<n - 1; i++)
 	{
 		x = a[i]; poz = i;
@@ -233,6 +242,8 @@ void sort_selectie(HWND hwnd, int n, int a[100])
 			}
 		a[poz] = a[i]; a[i] = x;
 	}
+	end3=clock();
+	timp3=int(end3-start3);
 
 	
 	char string[1000];
@@ -252,31 +263,11 @@ void sort_selectie(HWND hwnd, int n, int a[100])
 		WM_SETTEXT,     /*UINT*/        /*Message*/
 		NULL,           /*WPARAM*/      /*Unused*/
 		(LPARAM)TEXT(string));  /*LPARAM*/      /*Text*/
+
+
 }
 
-void DrawPixels(HWND hwnd) {
 
-    PAINTSTRUCT ps;
-    RECT r;
-
-    GetClientRect(hwnd, &r);
-
-    if (r.bottom == 0) {
-    
-        return;
-    }
-
-    HDC hdc = BeginPaint(hwnd, &ps);
-
-    for (int i=0; i<1000; i++) {
-
-        int x = rand() % r.right;
-        int y = rand() % r.bottom;
-        SetPixel(hdc, x, y, RGB(255, 0, 0));
-    }
-
-    EndPaint(hwnd, &ps);
-}
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -286,12 +277,14 @@ HWND hTrack;
 HWND hlbl;
 HWND numar;
 
+HDC hdc;
+PAINTSTRUCT ps;
+RECT rcClient;
+HWND hwndButton, hwndButton1, hwndButton2, hwndButton3, hwndQuit,hwndGrafic1,hwndGrafic2,hwndGrafic3,hwndInapoi;
+HWND hwndEdit, hwndEdit2,hwndQuit2;
+HWND mesash, mesash1,mesajj2,mesajj3,mesajj4;
 
-HWND hwndButton, hwndButton1, hwndButton2, hwndButton3, hwndQuit,hwndGrafic1,hwndGrafic2,hwndGrafic3;
-HWND hwndEdit, hwndEdit2;
-HWND mesash, mesash1;
 
-clock_t start1,start2,start3,end1,end2,end3;
 
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -319,7 +312,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	//srand(time(NULL));
 
 	return (int)msg.wParam;
 }
@@ -346,9 +338,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			40, 20, 300, 230,
 			hwnd, (HMENU)1, NULL, NULL);
 
-
-
-		hwndEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", " ", WS_CHILD | WS_VISIBLE | ES_NUMBER, 40, 60, 150, 20, hwnd, NULL, NULL, NULL);
+		hwndEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", " ", WS_CHILD | WS_VISIBLE | ES_NUMBER, 40, 60, 50, 20, hwnd, NULL, NULL, NULL);
 
 		hwndButton = CreateWindow("BUTTON", "OK",
 			WS_VISIBLE | WS_CHILD, 40, 100, 80, 25,
@@ -358,22 +348,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			WS_VISIBLE | WS_CHILD,
 			140, 100, 80, 25, hwnd, (HMENU)ID_QUIT, NULL, NULL);
 
-		hwndButton1 = CreateWindow("button", "Vectori",   // de aici
-			WS_VISIBLE | WS_CHILD, 15, 150, 80, 25,
+		hwndButton1 = CreateWindow("button", "Sortati VECTORUL",  
+			WS_VISIBLE | WS_CHILD, 15, 150, 145, 25,
 			hwnd, (HMENU)ID_vectori, NULL, NULL);
 
-		hwndButton2 = CreateWindow("button", "LSI",
-			WS_VISIBLE | WS_CHILD, 125, 150, 80, 25,
+		hwndButton2 = CreateWindow("button", "Sortati lista SIMPLA",
+			WS_VISIBLE | WS_CHILD, 175, 150, 145, 25,
 			hwnd, (HMENU)ID_LSI, NULL, NULL);
 
-		hwndButton3 = CreateWindow("button", "LDI",
-			WS_VISIBLE | WS_CHILD, 235, 150, 80, 25,
+		hwndButton3 = CreateWindow("button", "Sortati lista DUBLA",
+			WS_VISIBLE | WS_CHILD, 335, 150, 145, 25,
 			hwnd, (HMENU)ID_LDI, NULL, NULL);
 
 		hwndEdit2 = CreateWindow("Edit", "",
 			WS_BORDER | WS_CHILD | WS_VISIBLE,
-			20, 50, 350, 20, hwnd, NULL,
+			20, 50, 470, 25, hwnd, NULL,
 			NULL, NULL);
+
+		hwndGrafic1=CreateWindow("button", "VeziGraficEFIECIENTA",
+			WS_VISIBLE | WS_CHILD, 165, 200, 155, 35,
+			hwnd, (HMENU)ID_GRAFIC1, NULL, NULL);
+
+		hwndInapoi=CreateWindow("button", "Inapoi",
+			WS_VISIBLE | WS_CHILD, 50, 300, 80, 25,
+			hwnd, (HMENU)ID_INAPOI, NULL, NULL);
+
+		hwndQuit2=CreateWindow("Button", "Iesire",
+			WS_VISIBLE | WS_CHILD,
+			355, 300, 80, 25, hwnd, (HMENU)ID_QUIT2, NULL, NULL);
+
+		mesash1 = CreateWindowW(L"Static", mesaj1,
+				WS_CHILD | WS_VISIBLE | SS_LEFT,
+				20, 20, 300, 23,
+				hwnd, NULL, NULL, NULL);
 
 		
 
@@ -381,6 +388,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 		ShowWindow(hwndButton2, SW_HIDE);
 		ShowWindow(hwndButton3, SW_HIDE);
 		ShowWindow(hwndEdit2, SW_HIDE);
+		ShowWindow(hwndGrafic1, SW_HIDE);
+		ShowWindow(hwndInapoi, SW_HIDE);
+		ShowWindow(hwndQuit2, SW_HIDE);
+		ShowWindow(mesash1, SW_HIDE);
 		
 
 	}; break;
@@ -403,6 +414,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndEdit, SW_HIDE);
 			ShowWindow(hwndQuit, SW_HIDE);
 			ShowWindow(mesash, SW_HIDE);
+			ShowWindow(hwndGrafic1, SW_SHOW);
+			ShowWindow(mesash1, SW_SHOW);
+			ShowWindow(hwndQuit2, SW_SHOW);
+			
 
 			int gwstat = 0;
 			char textul[100];
@@ -412,12 +427,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			gwstat = GetWindowText(hwndEdit, t, 100);
 			strcpy(replace, textul);
 
-			// in replace ai continutul hwndEdit sub forma de string => convert cu 'atoi' probabil
 
-			mesash1 = CreateWindowW(L"Static", mesaj1,
-				WS_CHILD | WS_VISIBLE | SS_LEFT,
-				20, 20, 300, 23,
-				hwnd, NULL, NULL, NULL);
+			
 
 
 		};
@@ -426,6 +437,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 		case ID_QUIT: {
 			PostQuitMessage(0);
 		}; break;
+
+		case ID_QUIT2:{
+			PostQuitMessage(0);
+					  }; break;
 
 		case ID_vectori: {
 
@@ -450,47 +465,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				p = strtok(NULL, " ");
 			}
 
-			start1=clock();
+		
 			sort_selectie(hwnd, k, v);
-			end1=clock();
+			
+
+			
 
 			ShowWindow(hwndEdit2, SW_HIDE);
 			ShowWindow(hwndButton1, SW_HIDE);
 			ShowWindow(hwndButton2, SW_HIDE);
 			ShowWindow(hwndButton3, SW_HIDE);
 			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndGrafic1, SW_HIDE);
+			ShowWindow(hwndInapoi, SW_SHOW);
+			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndQuit2, SW_SHOW);
 
-			hwndGrafic1=CreateWindow("button", "ArataGRAFIC",
-			WS_VISIBLE | WS_CHILD, 20, 400, 80, 25,
-			hwnd, (HMENU)ID_GRAFIC1, NULL, NULL);
 
-			CreateWindowW(L"Static", mesaj2,
+			
+
+			mesajj2=CreateWindowW(L"Static", mesaj2,
 				WS_CHILD | WS_VISIBLE | SS_LEFT,
 				30, 20, 100, 30,
 				hwnd, NULL, NULL, NULL);
 
-			PAINTSTRUCT ps;
-			 RECT r;
-			 int x=500,y=500;
-
-			GetClientRect(hwnd, &r);
-
-			if (r.bottom == 0) {
-    
-				return 0;
-			  }
-
-			HDC hdc = BeginPaint(hwnd, &ps);
-
-		 for (int i=0; i<500; i++) {
-	
-				 
-				  SetPixel(hdc, x, y, RGB(255, 0, 0));
-				  x--;
-				  y--;
-				}
-
-			 EndPaint(hwnd, &ps);
+			
 
 
 		}; break;
@@ -503,16 +502,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndButton1, SW_HIDE);
 			ShowWindow(hwndButton2, SW_HIDE);
 			ShowWindow(hwndButton3, SW_HIDE);
+			ShowWindow(hwndGrafic1, SW_HIDE);
 			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndInapoi, SW_SHOW);
+			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndQuit2, SW_SHOW);
+			
 
-			hwndGrafic2=CreateWindow("button", "ArataGRAFIC",
-			WS_VISIBLE | WS_CHILD, 20, 400, 80, 25,
-			hwnd, (HMENU)ID_GRAFIC2, NULL, NULL);
-
-			CreateWindowW(L"Static", mesaj3,
+			mesajj3=CreateWindowW(L"Static", mesaj3,
 				WS_CHILD | WS_VISIBLE | SS_LEFT,
-				20, 20, 100, 30,
-				hwnd, (HMENU)1, NULL, NULL);
+				30, 20, 200, 30,
+				hwnd, NULL, NULL, NULL);
 
 			char replace[100];
 			int gwstat = 0;
@@ -531,9 +531,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				createS(atoi(p));
 				p = strtok(NULL, " ");
 			}
-
+			
 			sortare_lista_simpla();
-
+			
 			afisareS(hwnd);
 		}; break;
 
@@ -544,15 +544,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndButton2, SW_HIDE);
 			ShowWindow(hwndButton3, SW_HIDE);
 			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndGrafic1, SW_HIDE);
+			ShowWindow(hwndInapoi, SW_SHOW);
+			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndQuit2, SW_SHOW);
 
-			CreateWindowW(L"Static", mesaj4,
+			
+
+			mesajj4=CreateWindowW(L"Static", mesaj4,
 				WS_CHILD | WS_VISIBLE | SS_LEFT,
 				20, 20, 200, 30,
 				hwnd, (HMENU)1, NULL, NULL);
 
-			hwndGrafic3=CreateWindow("button", "ArataGRAFIC",
-			WS_VISIBLE | WS_CHILD, 20, 400, 80, 25,
-			hwnd, (HMENU)ID_GRAFIC3, NULL, NULL);
+			
 
 			char replace[100];
 			int gwstat = 0;
@@ -571,9 +575,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				createD(atoi(p));
 				p = strtok(NULL, " ");
 			}
-
+			
 			sortare_lista_dubla();
-
+			
 			afisareD(hwnd);
 
 			
@@ -589,11 +593,83 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndEdit, SW_HIDE);
 			ShowWindow(hwndQuit, SW_HIDE);
 			ShowWindow(mesash, SW_HIDE);
-						}break;
+			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(mesajj2, SW_HIDE);
+			ShowWindow(mesajj3, SW_HIDE);
+			ShowWindow(mesajj4, SW_HIDE);
+			ShowWindow(vectori_result, SW_HIDE);
+			ShowWindow(mesash1, SW_HIDE);
+			ShowWindow(hwndQuit2, SW_SHOW);
+			ShowWindow(hwndGrafic1, SW_HIDE);
+			ShowWindow(hwndInapoi, SW_SHOW);
+			
+		
+			
+
+            hdc = BeginPaint(hwnd, &ps);
+
+			GetClientRect(hwnd, &rcClient);
+
+			HPEN hPen = CreatePen(PS_NULL, 1, RGB(0, 0, 0));
+			HPEN holdPen = HPEN(SelectObject(hdc, HGDIOBJ(hPen)));
+			HBRUSH hBrush1 = CreateSolidBrush(RGB(121, 90, 0));
+			HBRUSH hBrush2 = CreateSolidBrush(RGB(240, 63, 19));
+			HBRUSH hBrush3 = CreateSolidBrush(RGB(9, 189, 21));
+
+			HBRUSH holdBrush = HBRUSH(SelectObject(hdc, hBrush1));
+
+            
+			Rectangle(hdc,30,30,45,timp1*10);
+			SelectObject(hdc, hBrush2);
+			Rectangle(hdc,70,30,85,timp2*10);
+			SelectObject(hdc, hBrush3);
+			Rectangle(hdc,110,30,125,timp3*10);
+
+			SelectObject(hdc, holdPen);
+			SelectObject(hdc, holdBrush);
+
+			DeleteObject(hPen);
+			DeleteObject(hBrush1);
+			DeleteObject(hBrush2);
+			DeleteObject(hBrush3);
+
+            EndPaint(hwnd, &ps);
+           
+
+
+
+						};break;
+
+	
+
+		case ID_INAPOI:{
+				ShowWindow(hwndEdit2, SW_SHOW);
+				ShowWindow(hwndButton1, SW_SHOW);
+				ShowWindow(hwndButton2, SW_SHOW);
+				ShowWindow(hwndButton3, SW_SHOW);
+				ShowWindow(mesash, SW_HIDE);
+			//	ShowWindow(mesash1, SW_HIDE);
+				ShowWindow(hwndEdit,SW_HIDE);
+				ShowWindow(vectori_result, SW_HIDE);
+				ShowWindow(mesajj2, SW_HIDE);
+				ShowWindow(mesajj3, SW_HIDE);
+				ShowWindow(mesajj4, SW_HIDE);
+				ShowWindow(hwndGrafic1, SW_SHOW);
+				ShowWindow(hwndInapoi,SW_HIDE);
+				ShowWindow(mesash1, SW_SHOW);
+				ShowWindow(hwndQuit2, SW_SHOW);
+				
+					   }
+
 
 		};
 		break;
+
 	}
+
+	
+	
+
 
 	case WM_DESTROY:
 	{

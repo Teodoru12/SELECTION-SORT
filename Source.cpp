@@ -6,6 +6,8 @@
 #include<string.h>
 #include<commctrl.h>
 #include<time.h>
+#include<math.h>
+
 
 #define ID_BEEP 1
 #define ID_QUIT 20
@@ -19,12 +21,33 @@
 #define ID_GRAFIC3 125
 #define ID_INAPOI 126
 #define ID_QUIT2 21
+#define IDM_FILE_HELP 1010
+#define IDM_FILE_QUIT 1011
+
 
 char c[100];
 int v[100];
 int timp1,timp2,timp3;
-HWND vectori_result;
-clock_t start1,start2,start3,end1,end2,end3;
+HWND vectori_result,listeS_result,listeD_result;
+clock_t start1,start2,start3;
+double t1,t2,t3;
+
+void AddMenus(HWND hwnd) {
+
+    HMENU hMenubar;
+    HMENU hMenu;
+
+    hMenubar = CreateMenu();
+    hMenu = CreateMenu();
+
+    AppendMenuW(hMenu, MF_STRING, IDM_FILE_HELP, L"&Indicatii");
+    AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenuW(hMenu, MF_STRING, IDM_FILE_QUIT, L"&Iesire");
+
+    AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR) hMenu, L"&HELP");
+    SetMenu(hwnd, hMenubar);
+}
+
 
 typedef struct nodS{
 int numar;
@@ -42,6 +65,31 @@ typedef struct nodD {
 nodD *prim = NULL;
 nodD *ultim = NULL;
 
+void stergereS()
+{
+	nodS *p=head;
+	while(head!=0)
+	{
+		head=p;
+		head=head->urmator;
+		free(p);
+	}
+	end=0;
+}
+
+void stergereD()
+{
+	nodD *p=prim;
+	while(head!=0)
+	{
+		prim=p;
+		prim=prim->urmator;
+		free(p);
+	}
+	ultim=0;
+}
+
+
 void schimbare(int **a, char ***c, int n)
 {
 	for (int i = 0; i<n; i++)
@@ -51,6 +99,18 @@ void schimbare(int **a, char ***c, int n)
 	}
 }
 
+int searchS(int key)
+{
+	nodS *p=head;
+	while(p!=NULL)
+	{
+		if(p->numar==key)
+			return 1;
+		p=p->urmator;
+	}
+	return 0;
+
+}
 
 void createS(int x)
 {
@@ -58,6 +118,8 @@ void createS(int x)
 	p=(nodS*)malloc(sizeof(nodS));
 	p->numar=x;
 	p->urmator=NULL;
+	if(searchS(x)==1)
+		return;
 	if(head==NULL)
 	{
 	head=end=p;
@@ -67,12 +129,26 @@ void createS(int x)
 	end=p;
 }
 
+int searchD(int key)
+{
+	nodD *p=prim;
+	while(p!=NULL)
+	{
+		if(p->numar==key)
+			return 1;
+		p=p->urmator;
+	}
+	return 0;
+
+}
 
 void createD(int x)
 {
 nodD *p;
 p=(nodD*)malloc(sizeof(nodD));
 p->numar=x;
+if(searchD(x)==1)
+	return;
 if(prim == NULL)
 {
 prim=ultim=p;
@@ -117,9 +193,9 @@ void afisareS(HWND hwnd)
 		strcat(string, " ");
 	}
 
-	vectori_result = CreateWindow("Static", TEXT(string), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 70, 600, 30, hwnd, NULL, NULL, NULL);
+	listeS_result = CreateWindow("Static", TEXT(string), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 70, 600, 30, hwnd, NULL, NULL, NULL);
 
-	SendMessage(vectori_result,     /*HWND*/        /*Label*/
+	SendMessage(listeS_result,     /*HWND*/        /*Label*/
 		WM_SETTEXT,     /*UINT*/        /*Message*/
 		NULL,           /*WPARAM*/      /*Unused*/
 		(LPARAM)TEXT(string));  /*LPARAM*/      /*Text*/
@@ -153,9 +229,9 @@ void afisareD(HWND hwnd)
 		strcat(string, " ");
 	}
 
-	vectori_result = CreateWindow("Static", TEXT(string), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 70, 600, 30, hwnd, NULL, NULL, NULL);
+	listeD_result = CreateWindow("Static", TEXT(string), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 70, 600, 30, hwnd, NULL, NULL, NULL);
 
-	SendMessage(vectori_result,     /*HWND*/        /*Label*/
+	SendMessage(listeD_result,     /*HWND*/        /*Label*/
 		WM_SETTEXT,     /*UINT*/        /*Message*/
 		NULL,           /*WPARAM*/      /*Unused*/
 		(LPARAM)TEXT(string));  /*LPARAM*/      /*Text*/
@@ -170,7 +246,6 @@ void sortare_lista_simpla()
 	poz=(nodS*)malloc(sizeof(nodS));
 	j=(nodS*)malloc(sizeof(nodS));
 	x=(nodS*)malloc(sizeof(nodS));
-	start1=clock();
 
 	for(p=head;p!=end;p=p->urmator)
 	{
@@ -189,8 +264,7 @@ void sortare_lista_simpla()
 			p->numar=aux;
 		}
 	}
-	end1=clock();
-	timp1=int(end1-start1);
+	
 }
 
 void sortare_lista_dubla()
@@ -201,7 +275,6 @@ void sortare_lista_dubla()
 	poz=(nodD*)malloc(sizeof(nodD));
 	j=(nodD*)malloc(sizeof(nodD));
 	x=(nodD*)malloc(sizeof(nodD));
-	start2=clock();
 		for(p=prim;p!=ultim;p=p->urmator)
 		{
 		x=p;
@@ -218,8 +291,7 @@ void sortare_lista_dubla()
 			p->numar=aux;
 		}
 		}
-		end2=clock();
-	timp2=int(end2-start2);
+	
 }
 
 
@@ -231,7 +303,7 @@ void sort_selectie(HWND hwnd, int n, int a[100])
 
 	char **s;
 	s = (char**)malloc(sizeof(char*)*n);
-	start3=clock();
+	
 	for (i = 0; i<n - 1; i++)
 	{
 		x = a[i]; poz = i;
@@ -242,8 +314,7 @@ void sort_selectie(HWND hwnd, int n, int a[100])
 			}
 		a[poz] = a[i]; a[i] = x;
 	}
-	end3=clock();
-	timp3=int(end3-start3);
+	
 
 	
 	char string[1000];
@@ -283,6 +354,7 @@ RECT rcClient;
 HWND hwndButton, hwndButton1, hwndButton2, hwndButton3, hwndQuit,hwndGrafic1,hwndGrafic2,hwndGrafic3,hwndInapoi;
 HWND hwndEdit, hwndEdit2,hwndQuit2;
 HWND mesash, mesash1,mesajj2,mesajj3,mesajj4;
+HWND vec,lis,lid;
 
 
 
@@ -290,15 +362,17 @@ HWND mesash, mesash1,mesajj2,mesajj3,mesajj4;
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	PWSTR lpCmdLine, int nCmdShow) {
 
+
+		HBRUSH hh=CreateSolidBrush(RGB(255,255,102));
+	
 	MSG  msg;
 	WNDCLASSW wc = { 0 };
 	wc.lpszClassName = L"Static image";
 	wc.hInstance = hInstance;
-	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
+	wc.hbrBackground = hh;
 	wc.lpfnWndProc = WndProc;
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.lpszClassName = L"Edit control";
-	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"Trackbar";
 
@@ -318,14 +392,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
 
+
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 	WPARAM wParam, LPARAM lParam) {
 
-	static wchar_t *mesaj = L"Introduceti numarul de elemente ce doriti sa fie sortate!";
+	static wchar_t *mesaj = L"\n\n\n        Bine ati venit! Aplicatia va arata eficienta algoritmului de selection sort pentru vectori, liste simple si dublu inlantuite.           Pentru a continua apasati OK!";
 	static wchar_t *mesaj1 = L"Introduceti numerele ce doriti sa fie sortate!";
 	static wchar_t *mesaj2 = L"Vectorul ordonat:";
 	static wchar_t *mesaj3 = L"Lista simplu inlantuita ordonata:";
 	static wchar_t *mesaj4 = L"Lista dublu inlantuita ordonata:";
+	static wchar_t *vectori= L"Vectori";
+	static wchar_t *LSI = L"LSI";
+	static wchar_t *LDI = L"LDI";
 
 
 	switch (msg) {
@@ -333,20 +412,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 	case WM_CREATE:
 	{
 
+		AddMenus(hwnd);
+
 		mesash = CreateWindowW(L"Static", mesaj,
 			WS_CHILD | WS_VISIBLE | SS_LEFT,
-			40, 20, 300, 230,
+			40, 20, 400, 230,
 			hwnd, (HMENU)1, NULL, NULL);
 
-		hwndEdit = CreateWindowEx(WS_EX_CLIENTEDGE, "Edit", " ", WS_CHILD | WS_VISIBLE | ES_NUMBER, 40, 60, 50, 20, hwnd, NULL, NULL, NULL);
-
+		
 		hwndButton = CreateWindow("BUTTON", "OK",
-			WS_VISIBLE | WS_CHILD, 40, 100, 80, 25,
+			WS_VISIBLE | WS_CHILD, 130, 190, 80, 25,
 			hwnd, (HMENU)ID_BUTTON, NULL, NULL);
 
 		hwndQuit = CreateWindow("Button", "Quit",
 			WS_VISIBLE | WS_CHILD,
-			140, 100, 80, 25, hwnd, (HMENU)ID_QUIT, NULL, NULL);
+			270, 190, 80, 25, hwnd, (HMENU)ID_QUIT, NULL, NULL);
 
 		hwndButton1 = CreateWindow("button", "Sortati VECTORUL",  
 			WS_VISIBLE | WS_CHILD, 15, 150, 145, 25,
@@ -370,18 +450,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			hwnd, (HMENU)ID_GRAFIC1, NULL, NULL);
 
 		hwndInapoi=CreateWindow("button", "Inapoi",
-			WS_VISIBLE | WS_CHILD, 50, 300, 80, 25,
+			WS_VISIBLE | WS_CHILD, 50, 270, 80, 25,
 			hwnd, (HMENU)ID_INAPOI, NULL, NULL);
 
 		hwndQuit2=CreateWindow("Button", "Iesire",
 			WS_VISIBLE | WS_CHILD,
-			355, 300, 80, 25, hwnd, (HMENU)ID_QUIT2, NULL, NULL);
+			355, 270, 80, 25, hwnd, (HMENU)ID_QUIT2, NULL, NULL);
 
 		mesash1 = CreateWindowW(L"Static", mesaj1,
 				WS_CHILD | WS_VISIBLE | SS_LEFT,
 				20, 20, 300, 23,
 				hwnd, NULL, NULL, NULL);
 
+		vec=CreateWindowW(L"Static", vectori,
+			WS_CHILD | WS_VISIBLE | SS_LEFT,
+			40, 14, 48, 15,
+			hwnd, NULL, NULL, NULL);
+		lis=CreateWindowW(L"Static", LSI,
+			WS_CHILD | WS_VISIBLE | SS_LEFT,
+			40, 34, 33, 15,
+			hwnd, NULL, NULL, NULL);
+		lid=CreateWindowW(L"Static", LDI,
+			WS_CHILD | WS_VISIBLE | SS_LEFT,
+			40, 54, 33, 15,
+			hwnd, NULL, NULL, NULL);
 		
 
 		ShowWindow(hwndButton1, SW_HIDE);
@@ -392,6 +484,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 		ShowWindow(hwndInapoi, SW_HIDE);
 		ShowWindow(hwndQuit2, SW_HIDE);
 		ShowWindow(mesash1, SW_HIDE);
+		ShowWindow(vec, SW_HIDE);
+		ShowWindow(lis, SW_HIDE);
+		ShowWindow(lid, SW_HIDE);
 		
 
 	}; break;
@@ -417,22 +512,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndGrafic1, SW_SHOW);
 			ShowWindow(mesash1, SW_SHOW);
 			ShowWindow(hwndQuit2, SW_SHOW);
+			ShowWindow(vec, SW_HIDE);
+			ShowWindow(lis, SW_HIDE);
+			ShowWindow(lid, SW_HIDE);
 			
-
-			int gwstat = 0;
-			char textul[100];
-			char *t = &textul[0];
-
-			strcpy(textul, "");
-			gwstat = GetWindowText(hwndEdit, t, 100);
-			strcpy(replace, textul);
-
-
-			
-
 
 		};
 		break; 
+
+		case IDM_FILE_HELP:{
+
+				LPCTSTR Caption = "Application Programming Interface";
+
+							MessageBox( NULL,
+                "In primul rand pentru a continua apasati OK!\n"
+                "Dupa ce apasati OK introduceti numerele ce doriti sa fie sortate.\n "
+                "Odata ce le-ati introdus apasati pe rand pe butoanele destinate sortarii fiecarei categorii de structuri.\n"
+                "Butonul VeziGraficEFICIENTA va genera un grafic ce va arata eficacitatea SelectionSORT pentru fiecare categorie de structuri!",
+                Caption,
+                MB_OK);
+
+					return 0;
+						   }
+
+
+		case IDM_FILE_QUIT:
+              
+                SendMessage(hwnd, WM_CLOSE, 0, 0);
+                  break;
 
 		case ID_QUIT: {
 			PostQuitMessage(0);
@@ -443,6 +550,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 					  }; break;
 
 		case ID_vectori: {
+
+			if(GetWindowTextLength(hwndEdit2)==0)
+				MessageBox(hwnd,"Introduceti elemente spre sortare!!!",NULL,NULL);
+			else
+			{
 
 			char replace[100];
 			int gwstat = 0;
@@ -465,9 +577,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				p = strtok(NULL, " ");
 			}
 
-		
+			start1=clock();
 			sort_selectie(hwnd, k, v);
-			
+			t1=double(clock()-start1);
 
 			
 
@@ -480,6 +592,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndInapoi, SW_SHOW);
 			ShowWindow(mesash1, SW_HIDE);
 			ShowWindow(hwndQuit2, SW_SHOW);
+			ShowWindow(vec, SW_HIDE);
+			ShowWindow(lis, SW_HIDE);
+			ShowWindow(lid, SW_HIDE);
+			
 
 
 			
@@ -488,7 +604,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				WS_CHILD | WS_VISIBLE | SS_LEFT,
 				30, 20, 100, 30,
 				hwnd, NULL, NULL, NULL);
-
+			}
 			
 
 
@@ -497,6 +613,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 
 
 		case ID_LSI: {
+
+			if(GetWindowTextLength(hwndEdit2)==0)
+				MessageBox(hwnd,"Introduceti elemente spre sortare!!!",NULL,NULL);
+			else
+			{
 			
 			ShowWindow(hwndEdit2, SW_HIDE);
 			ShowWindow(hwndButton1, SW_HIDE);
@@ -507,6 +628,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndInapoi, SW_SHOW);
 			ShowWindow(mesash1, SW_HIDE);
 			ShowWindow(hwndQuit2, SW_SHOW);
+			ShowWindow(vec, SW_HIDE);
+			ShowWindow(lis, SW_HIDE);
+			ShowWindow(lid, SW_HIDE);
+			
 			
 
 			mesajj3=CreateWindowW(L"Static", mesaj3,
@@ -531,13 +656,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				createS(atoi(p));
 				p = strtok(NULL, " ");
 			}
-			
+			start2=clock();
 			sortare_lista_simpla();
+			t2=double(clock()-start2);
 			
 			afisareS(hwnd);
+			}
+
+			
 		}; break;
 
 		case ID_LDI: {
+
+			if(GetWindowTextLength(hwndEdit2)==0)
+				MessageBox(hwnd,"Introduceti elemente spre sortare!!!",NULL,NULL);
+			else
+			{
 
 			ShowWindow(hwndEdit2, SW_HIDE);
 			ShowWindow(hwndButton1, SW_HIDE);
@@ -548,6 +682,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndInapoi, SW_SHOW);
 			ShowWindow(mesash1, SW_HIDE);
 			ShowWindow(hwndQuit2, SW_SHOW);
+			ShowWindow(vec, SW_HIDE);
+			ShowWindow(lis, SW_HIDE);
+			ShowWindow(lid, SW_HIDE);
+			
 
 			
 
@@ -576,15 +714,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				p = strtok(NULL, " ");
 			}
 			
+			start3=clock();
 			sortare_lista_dubla();
-			
+			t3=double(clock()-start3);
+
 			afisareD(hwnd);
+
+			}
 
 			
 		}; break;
 
 
 		case ID_GRAFIC1:{
+
+
+			if(GetWindowTextLength(hwndEdit2)==0)
+			{
+				MessageBox(hwnd,"Introduceti elemente pentru sortare!!!", "Atentie!", NULL);
+			}
+			else
+				if(vectori_result==NULL||listeS_result==NULL||listeD_result==NULL)
+					MessageBox(hwnd,"Sortati cele trei structuri de date!!!", "Atentie!", NULL);
+				
+				else
+			{
+
+
+
 			ShowWindow(hwndEdit2, SW_HIDE);
 			ShowWindow(hwndButton1, SW_HIDE);
 			ShowWindow(hwndButton2, SW_HIDE);
@@ -602,9 +759,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			ShowWindow(hwndQuit2, SW_SHOW);
 			ShowWindow(hwndGrafic1, SW_HIDE);
 			ShowWindow(hwndInapoi, SW_SHOW);
+			ShowWindow(vec, SW_SHOW);
+			ShowWindow(lis, SW_SHOW);
+			ShowWindow(lid, SW_SHOW);
 			
-		
-			
+	
 
             hdc = BeginPaint(hwnd, &ps);
 
@@ -618,12 +777,36 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 
 			HBRUSH holdBrush = HBRUSH(SelectObject(hdc, hBrush1));
 
-            
-			Rectangle(hdc,30,30,45,timp1*10);
+
+			int a,b,c;
+			a=t1;
+			b=t2;
+			c=t3;
+			int max=a;
+			if(b>max)
+				max=b;
+			else
+				if(c>max)
+					max=c;
+
+			float r;
+
+			r=300.0/((float)max);
+
+
+			Rectangle(hdc,100,50,130,150-floor(r*float(a)));
 			SelectObject(hdc, hBrush2);
-			Rectangle(hdc,70,30,85,timp2*10);
+			Rectangle(hdc,200,50,230,150-floor(r*float(b)));
 			SelectObject(hdc, hBrush3);
-			Rectangle(hdc,110,30,125,timp3*10);
+			Rectangle(hdc,300,50,330,150-floor(r*float(c)));
+			
+
+			SelectObject(hdc,hBrush1);
+			Rectangle(hdc,30,20,35,25);
+			SelectObject(hdc,hBrush2);
+			Rectangle(hdc,30,40,35,45);
+			SelectObject(hdc,hBrush3);
+			Rectangle(hdc,30,60,35,65);
 
 			SelectObject(hdc, holdPen);
 			SelectObject(hdc, holdBrush);
@@ -634,6 +817,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 			DeleteObject(hBrush3);
 
             EndPaint(hwnd, &ps);
+
+			}
            
 
 
@@ -658,7 +843,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg,
 				ShowWindow(hwndInapoi,SW_HIDE);
 				ShowWindow(mesash1, SW_SHOW);
 				ShowWindow(hwndQuit2, SW_SHOW);
-				
+				ShowWindow(listeD_result, SW_HIDE);
+				ShowWindow(listeS_result, SW_HIDE);
+				ShowWindow(vec, SW_HIDE);
+				ShowWindow(lis, SW_HIDE);
+				ShowWindow(lid, SW_HIDE);
+			//	stergereS();
+				//stergereD();
 					   }
 
 
